@@ -1,22 +1,14 @@
 """
 Transforms raw Google Sheets rows into the metrics dict consumed by the dashboard.
 
-Sheet columns (hoja ag-grid) — order as received from Google Sheets API:
-  A  Contenedor
-  B  Puerto origen
-  C  Puerto arribo Birdie
-  D  Línea de entrega
-  E  ATD Birdie
-  F  ATD Coppel
-  G  Diferencia          ← ATD Birdie − ATD Coppel (pre-computed in sheet)
-  H  ATA Birdie
-  I  ATA/ETA Coppel      ← "column 8" referenced by user (1-indexed = col I)
-  J  ETA Birdie          ← column J referenced by user
-  K  Diferencia.1        ← ATA Birdie − ATA/ETA Coppel (pre-computed in sheet)
-  L  Status de solicitud
-  M  Comentarios Coppel
+Sheet columns (hoja ag-grid) — confirmed by user:
+  J  ETA Birdie
+  O  ATA/ETA Coppel
 
-ETA PREDICTIVO: computed here as (ETA Birdie) − (ATA/ETA Coppel) in days.
+NOTE: the processor uses column HEADER NAMES, not positions, so column
+letters are informational only — the dict lookup always finds the right column.
+
+ETA PREDICTIVO: computed as (ETA Birdie col J) − (ATA/ETA Coppel col O) in days.
   → NOT Diferencia.1, which measures ATA Birdie vs ATA/ETA Coppel.
 """
 
