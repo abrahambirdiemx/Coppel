@@ -169,20 +169,13 @@ def process(rows: list[dict]) -> dict:
     puertos = sorted(puertos_raw, key=lambda x: -x["n"])[:12]
 
     # --- ETA prediction (Discharged rows: ATA Birdie col H vs ATA/ETA Coppel col O) ---
-    discharged = []
-    for r in rows:
-        if r.get("Status de solicitud", "").strip() != "Discharged":
-            continue
-        ata_birdie = r.get("ATA Birdie", "").strip()
-        ata_coppel = r.get("ATA/ETA Coppel", "").strip()
-        if not ata_birdie or not ata_coppel:
-            continue
-        diff = _date_diff(ata_birdie, ata_coppel)
-        if diff is None:
-            continue
-        discharged.append({"row": r, "eta_diff": diff})
-
-    eta_diffs = [d["eta_diff"] for d in discharged]
+    # Diferencia.1 = ATA Birdie − ATA/ETA Coppel (pre-computed in sheet) — use directly.
+    discharged = [
+        r for r in rows
+        if r.get("Status de solicitud", "").strip() == "Discharged"
+        and _int(r.get("Diferencia.1", "")) is not None
+    ]
+    eta_diffs = [_int(r["Diferencia.1"]) for r in discharged]
     eta_n = len(eta_diffs)
     eta_exact = sum(1 for d in eta_diffs if d == 0)
     eta_w1 = sum(1 for d in eta_diffs if abs(d) <= 1)
