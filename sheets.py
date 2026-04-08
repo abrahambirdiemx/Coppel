@@ -27,7 +27,19 @@ def get_sheet_rows() -> list[dict]:
     if len(values) < 2:
         return []
 
-    headers = values[0]
+    # Deduplicate headers the same way pandas does:
+    # second "Diferencia" → "Diferencia.1", third → "Diferencia.2", etc.
+    raw_headers = values[0]
+    seen: dict[str, int] = {}
+    headers = []
+    for h in raw_headers:
+        if h in seen:
+            seen[h] += 1
+            headers.append(f"{h}.{seen[h]}")
+        else:
+            seen[h] = 0
+            headers.append(h)
+
     rows = []
     for raw_row in values[1:]:
         padded = raw_row + [""] * (len(headers) - len(raw_row))
