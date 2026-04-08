@@ -1,19 +1,54 @@
 """
 Transforms raw Google Sheets rows into the metrics dict consumed by the dashboard.
 
-Expected sheet columns (hoja ag-grid):
-  Contenedor, Puerto origen, Puerto arribo Birdie, Línea de entrega,
-  ATD Birdie, ATD Coppel, Diferencia,
-  ATA Birdie, ATA/ETA Coppel, Diferencia.1, ETA Birdie,
-  Status de solicitud, Comentarios Coppel
+Sheet columns (hoja ag-grid) — order as received from Google Sheets API:
+  A  Contenedor
+  B  Puerto origen
+  C  Puerto arribo Birdie
+  D  Línea de entrega
+  E  ATD Birdie
+  F  ATD Coppel
+  G  Diferencia          ← ATD Birdie − ATD Coppel (pre-computed in sheet)
+  H  ATA Birdie
+  I  ATA/ETA Coppel      ← "column 8" referenced by user (1-indexed = col I)
+  J  ETA Birdie          ← column J referenced by user
+  K  Diferencia.1        ← ATA Birdie − ATA/ETA Coppel (pre-computed in sheet)
+  L  Status de solicitud
+  M  Comentarios Coppel
+
+ETA PREDICTIVO: computed here as (ETA Birdie) − (ATA/ETA Coppel) in days.
+  → NOT Diferencia.1, which measures ATA Birdie vs ATA/ETA Coppel.
 """
 
 from collections import Counter, defaultdict
+from datetime import datetime
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+_DATE_FMTS = ("%d/%m/%Y", "%Y-%m-%d", "%m/%d/%Y")
+
+
+def _parse_date(val: str):
+    """Try common date formats; return datetime or None."""
+    v = str(val).strip()
+    for fmt in _DATE_FMTS:
+        try:
+            return datetime.strptime(v, fmt)
+        except ValueError:
+            pass
+    return None
+
+
+def _date_diff(a: str, b: str) -> int | None:
+    """Return (date_a - date_b).days or None if either is unparseable."""
+    da, db = _parse_date(a), _parse_date(b)
+    if da is None or db is None:
+        return None
+    return (da - db).days
+
 
 def _int(val: str) -> int | None:
     """Parse integer from a sheet cell; returns None if empty/invalid."""
@@ -142,14 +177,23 @@ def process(rows: list[dict]) -> dict:
     # Sort by n desc, take top 12
     puertos = sorted(puertos_raw, key=lambda x: -x["n"])[:12]
 
-    # --- ETA prediction (Discharged rows: ETA Birdie vs ATA Coppel) ----------
-    discharged = [
-        r for r in rows
-        if r.get("Status de solicitud", "").strip() == "Discharged"
-        and _has_value(r.get("ETA Birdie", ""))
-        and _int(r.get("Diferencia.1", "")) is not None
-    ]
-    eta_diffs = [_int(r["Diferencia.1"]) for r in discharged]
+    # --- ETA prediction (Discharged rows: ETA Birdie col J vs ATA/ETA Coppel col I) ---
+    # Compute the date difference directly — NOT Diferencia.1 (which is ATA Birdie vs ATA Coppel).
+    discharged = []
+    for r in rows:
+        if r.get("Status de solicitud", "").strip() != "Discharged":
+            continue
+        eta = r.get("ETA Birdie", "").strip()
+        ata_coppel = r.get("ATA/ETA Coppel", "").strip()
+        if not eta or not ata_coppel:
+            continue
+        diff = _date_diff(eta, ata_coppel)
+        if diff is None:
+            continue
+        discharged.append({"row": r, "eta_diff": diff})
+
+    eta_diffs = [d["eta_diff"] for d in discharged]
+    eta_n = len(eta_diffs)
     eta_exact = sum(1 for d in eta_diffs if d == 0)
     eta_w1 = sum(1 for d in eta_diffs if abs(d) <= 1)
     eta_w3 = sum(1 for d in eta_diffs if abs(d) <= 3)
@@ -214,11 +258,11 @@ def process(rows: list[dict]) -> dict:
         "ata_navieras": ata_navieras,
         "ata_pods": ata_pods,
         "eta_prediction": {
-            "n": len(discharged),
+            "n": eta_n,
             "exact": eta_exact,
-            "pct_exact": _pct(eta_exact, len(discharged)),
-            "pct_w1": _pct(eta_w1, len(discharged)),
-            "pct_w3": _pct(eta_w3, len(discharged)),
+            "pct_exact": _pct(eta_exact, eta_n),
+            "pct_w1": _pct(eta_w1, eta_n),
+            "pct_w3": _pct(eta_w3, eta_n),
             "mean_diff": _mean(eta_diffs),
             "dist": eta_dist,
         },
