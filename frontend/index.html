@@ -566,7 +566,7 @@
           <div class="kpi-sub" id="kpi-ata-w1-sub">—</div>
         </div>
         <div class="kpi-card good">
-          <div class="kpi-label">ETA predictivo exacto</div>
+          <div class="kpi-label">ATA Birdie ±1 día vs ATA Coppel</div>
           <div class="kpi-value good" id="kpi-eta-pred">—</div>
           <div class="kpi-sub" id="kpi-eta-pred-sub">—</div>
         </div>
@@ -755,12 +755,12 @@
           <div class="kpi-sub">Lázaro Cárdenas · 167 CNTR</div>
         </div>
         <div class="kpi-card good">
-          <div class="kpi-label">ETA Birdie vs ATA Coppel</div>
+          <div class="kpi-label">ATA Birdie ±1 día vs ATA Coppel</div>
           <div class="kpi-value good" id="eta-pred-kpi">—</div>
           <div class="kpi-sub" id="eta-pred-sub">precisión predictiva</div>
         </div>
         <div class="kpi-card good">
-          <div class="kpi-label">ETA dentro ±1 día</div>
+          <div class="kpi-label">ATA Birdie exacto (Δ=0)</div>
           <div class="kpi-value good" id="eta-pred-w1">—</div>
           <div class="kpi-sub" id="eta-pred-w1-sub">—</div>
         </div>
@@ -778,8 +778,7 @@
       <div class="chart-card">
         <div class="chart-title">Nota: ETA predictivo vs ATA real</div>
         <p style="font-size:13px;color:var(--text2);line-height:1.8;">
-          El <strong style="color:var(--text);">ETA Birdie predijo correctamente</strong> la fecha de llegada real (ATA Coppel) en el <strong style="color:var(--good);">94.9%</strong> de los contenedores ya descargados (n=195).
-          El 99.5% cayó dentro de ±1 día. Esto confirma que la <strong style="color:var(--text);">capacidad predictiva de Birdie es alta</strong> — el delta en ATA exacto (79.5%) se explica principalmente por diferencias en la definición del evento de llegada, no en la calidad del pronóstico.
+          La métrica principal es <strong style="color:var(--text);">ATA Birdie ±1 día vs ATA Coppel</strong> (excluye filas sin valor en Diferencia). La diferencia exacta (Δ=0) refleja coincidencia perfecta de fecha; ±1 día es la tolerancia operativa recomendada dado que Birdie registra señal AIS de llegada y Coppel registra atraque operativo — eventos que naturalmente difieren 0–1 días.
         </p>
       </div>
     </div>
@@ -1010,8 +1009,8 @@ function renderKPIs(d) {
   document.getElementById('kpi-ata-w1').textContent = s.ata_within1 + '%';
   document.getElementById('kpi-ata-w1-sub').textContent = (Math.round(s.ata_total * s.ata_within1 / 100)) + ' / ' + s.ata_total + ' dentro de ±1 día';
   const ep2 = d.eta_prediction || {};
-  document.getElementById('kpi-eta-pred').textContent = (ep2.pct_exact || '—') + '%';
-  document.getElementById('kpi-eta-pred-sub').textContent = 'ETA Birdie vs ATA real · n=' + (ep2.n || '—');
+  document.getElementById('kpi-eta-pred').textContent = (ep2.pct_w1 || '—') + '%';
+  document.getElementById('kpi-eta-pred-sub').textContent = 'ATA Birdie vs ATA Coppel ±1d · excl. vacíos · n=' + (ep2.n || '—');
 
   // ATA navieras page
   if(document.getElementById('ata-nav-count')) {
@@ -1020,10 +1019,10 @@ function renderKPIs(d) {
   // ETA prediction KPIs
   const ep = d.eta_prediction || {};
   if(document.getElementById('eta-pred-kpi')) {
-    document.getElementById('eta-pred-kpi').textContent = (ep.pct_exact||'—') + '%';
-    document.getElementById('eta-pred-sub').textContent = ep.n + ' contenedores descargados';
-    document.getElementById('eta-pred-w1').textContent = (ep.pct_w1||'—') + '%';
-    document.getElementById('eta-pred-w1-sub').textContent = 'n=' + ep.n + ' · 100% dentro ±3 días';
+    document.getElementById('eta-pred-kpi').textContent = (ep.pct_w1||'—') + '%';
+    document.getElementById('eta-pred-sub').textContent = (ep.n||'—') + ' descargados · excl. vacíos · exacto: ' + (ep.pct_exact||'—') + '%';
+    document.getElementById('eta-pred-w1').textContent = (ep.pct_exact||'—') + '%';
+    document.getElementById('eta-pred-w1-sub').textContent = 'coincidencia exacta Δ=0 · n=' + (ep.n||'—');
   }
 
   document.getElementById('dir-exact').textContent = s.atd_pct + '%';
