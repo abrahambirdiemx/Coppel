@@ -2,14 +2,13 @@
 Transforms raw Google Sheets rows into the metrics dict consumed by the dashboard.
 
 Sheet columns (hoja ag-grid) — confirmed by user:
-  J  ETA Birdie
+  H  ATA Birdie
   O  ATA/ETA Coppel
 
 NOTE: the processor uses column HEADER NAMES, not positions, so column
 letters are informational only — the dict lookup always finds the right column.
 
-ETA PREDICTIVO: computed as (ETA Birdie col J) − (ATA/ETA Coppel col O) in days.
-  → NOT Diferencia.1, which measures ATA Birdie vs ATA/ETA Coppel.
+ETA PREDICTIVO: computed as (ATA Birdie col H) − (ATA/ETA Coppel col O) in days.
 """
 
 from collections import Counter, defaultdict
@@ -169,17 +168,16 @@ def process(rows: list[dict]) -> dict:
     # Sort by n desc, take top 12
     puertos = sorted(puertos_raw, key=lambda x: -x["n"])[:12]
 
-    # --- ETA prediction (Discharged rows: ETA Birdie col J vs ATA/ETA Coppel col I) ---
-    # Compute the date difference directly — NOT Diferencia.1 (which is ATA Birdie vs ATA Coppel).
+    # --- ETA prediction (Discharged rows: ATA Birdie col H vs ATA/ETA Coppel col O) ---
     discharged = []
     for r in rows:
         if r.get("Status de solicitud", "").strip() != "Discharged":
             continue
-        eta = r.get("ETA Birdie", "").strip()
+        ata_birdie = r.get("ATA Birdie", "").strip()
         ata_coppel = r.get("ATA/ETA Coppel", "").strip()
-        if not eta or not ata_coppel:
+        if not ata_birdie or not ata_coppel:
             continue
-        diff = _date_diff(eta, ata_coppel)
+        diff = _date_diff(ata_birdie, ata_coppel)
         if diff is None:
             continue
         discharged.append({"row": r, "eta_diff": diff})
