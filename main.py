@@ -56,6 +56,36 @@ def reload_data():
     return get_data()
 
 
+@app.get("/api/debug")
+def debug():
+    """Returns connection config and row count — use to diagnose Sheets issues."""
+    import os
+    sheet_id = os.getenv("GOOGLE_SHEETS_ID", "NOT SET")
+    sheet_name = os.getenv("GOOGLE_SHEET_NAME", "ag-grid")
+    sa_file = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "service-account.json")
+    sa_exists = Path(sa_file).exists()
+    try:
+        rows = get_sheet_rows()
+        return {
+            "status": "ok",
+            "sheet_id": sheet_id,
+            "sheet_name": sheet_name,
+            "service_account_file": sa_file,
+            "service_account_exists": sa_exists,
+            "rows_found": len(rows),
+            "first_row_keys": list(rows[0].keys()) if rows else [],
+        }
+    except Exception as exc:
+        return {
+            "status": "error",
+            "sheet_id": sheet_id,
+            "sheet_name": sheet_name,
+            "service_account_file": sa_file,
+            "service_account_exists": sa_exists,
+            "error": str(exc),
+        }
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
