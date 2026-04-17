@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
@@ -23,7 +23,16 @@ app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 @app.get("/", include_in_schema=False)
 def root():
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
+    # no-cache forces browser to always fetch fresh HTML/JS
+    content = (FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
+    return HTMLResponse(
+        content=content,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -54,6 +63,15 @@ def reload_data():
     button can trigger a server-side refresh without touching the sheet URL.
     """
     return get_data()
+
+
+@app.get("/api/version")
+def version():
+    """Quick check — confirms deployed commit and feature flags."""
+    return {
+        "version": "2026-04-17-wow",
+        "features": ["weekly_trend", "wow_badges", "column_fix_puerto_arribo"],
+    }
 
 
 @app.get("/api/debug")
