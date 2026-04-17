@@ -222,15 +222,14 @@ def process(rows: list[dict]) -> dict:
     # --- ATA navieras ---------------------------------------------------------
     ata_navieras = _group_accuracy(ata_rows, "Línea de entrega", "Diferencia.1")
 
-    # --- ATA PODs (Puerto arribo Birdie) --------------------------------------
-    ata_pods = _group_accuracy(ata_rows, "Puerto arribo Birdie", "Diferencia.1")
+    # --- ATA PODs — Sheet uses "Puerto arribo" (not "Puerto arribo Birdie") ---
+    ata_pods = _group_accuracy(ata_rows, "Puerto arribo", "Diferencia.1")
 
     # --- ATD navieras ---------------------------------------------------------
     navieras = _atd_group(atd_rows, "Línea de entrega", min_n=1)
 
-    # --- ATD puertos (top 12 by volume) ---------------------------------------
+    # --- ATD puertos (top 12 by volume) — "Puerto origen" ✓ ------------------
     puertos_raw = _atd_group(atd_rows, "Puerto origen", min_n=1)
-    # Sort by n desc, take top 12
     puertos = sorted(puertos_raw, key=lambda x: -x["n"])[:12]
 
     # --- ETA prediction (Discharged rows: ATA Birdie col H vs ATA/ETA Coppel col O) ---
@@ -273,14 +272,23 @@ def process(rows: list[dict]) -> dict:
     weekly_trend, wow = _weekly_trend(rows)
 
     # --- Table (all rows, raw) ------------------------------------------------
-    table_cols = [
-        "Contenedor", "Puerto origen", "Puerto arribo Birdie",
-        "Línea de entrega", "ATD Birdie", "ATD Coppel", "Diferencia",
-        "ATA Birdie", "ATA/ETA Coppel", "Diferencia.1", "ETA Birdie",
-        "Status de solicitud", "Comentarios Coppel",
-    ]
+    # Column names as they appear in the actual Google Sheet
     table = [
-        {col: r.get(col, "") for col in table_cols}
+        {
+            "Contenedor":         r.get("Contenedor", ""),
+            "Puerto origen":      r.get("Puerto origen", ""),
+            "Puerto arribo Birdie": r.get("Puerto arribo", r.get("Puerto arribo Birdie", "")),
+            "Línea de entrega":   r.get("Línea de entrega", ""),
+            "ATD Birdie":         r.get("ATD Birdie", ""),
+            "ATD Coppel":         r.get("ATD Coppel", ""),
+            "Diferencia":         r.get("Diferencia", ""),
+            "ATA Birdie":         r.get("ATA/ETA Birdie", r.get("ATA Birdie", "")),
+            "ATA/ETA Coppel":     r.get("ATA/ETA Coppel", ""),
+            "Diferencia.1":       r.get("Diferencia.1", ""),
+            "ETA Birdie":         r.get("ETA Birdie", ""),
+            "Status de solicitud": r.get("Status de solicitud", ""),
+            "Comentarios Coppel": r.get("Comentarios Coppel", ""),
+        }
         for r in rows
     ]
 
