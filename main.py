@@ -76,7 +76,7 @@ def version():
 
 @app.get("/api/debug")
 def debug():
-    """Returns connection config and row count — use to diagnose Sheets issues."""
+    """Returns connection config, row count, and version — use to diagnose Sheets issues."""
     import os
     sheet_id = os.getenv("GOOGLE_SHEETS_ID", "NOT SET")
     sheet_name = os.getenv("GOOGLE_SHEET_NAME", "ag-grid")
@@ -86,6 +86,7 @@ def debug():
         rows = get_sheet_rows()
         return {
             "status": "ok",
+            "code_version": "f85b90d",
             "sheet_id": sheet_id,
             "sheet_name": sheet_name,
             "service_account_file": sa_file,
@@ -96,6 +97,7 @@ def debug():
     except Exception as exc:
         return {
             "status": "error",
+            "code_version": "f85b90d",
             "sheet_id": sheet_id,
             "sheet_name": sheet_name,
             "service_account_file": sa_file,
