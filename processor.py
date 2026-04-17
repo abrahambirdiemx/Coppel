@@ -10,6 +10,7 @@ letters are informational only — the dict lookup always finds the right column
 
 ETA PREDICTIVO: computed as (ATA Birdie col H) − (ATA/ETA Coppel col O) in days.
 """
+from __future__ import annotations
 
 from collections import Counter, defaultdict
 from datetime import datetime, date as date_type
