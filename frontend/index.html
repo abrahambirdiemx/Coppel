@@ -1018,24 +1018,24 @@ function renderWoW(d) {
   if (!w.current_week) return;
   const prev = w.prev_week || '';
 
-  // ATD cards
-  ['kpi-atd-exact', 'kpi-atd-w1', 'dir-exact'].forEach(id => {
+  // ATD cards — IDs: kpi-atd-pct, kpi-atd-w1, dir-exact
+  [['kpi-atd-pct', w.atd_delta], ['kpi-atd-w1', w.atd_delta], ['dir-exact', w.atd_delta]].forEach(([id, delta]) => {
     const el = document.getElementById(id);
     if (el) {
-      const sub = el.closest('.kpi-card, .dir-card');
-      if (sub && !sub.querySelector('.wow-badge')) {
-        sub.insertAdjacentHTML('beforeend', wowBadge(w.atd_delta, prev));
+      const card = el.closest('.kpi-card, .dir-card');
+      if (card && !card.querySelector('.wow-badge')) {
+        card.insertAdjacentHTML('beforeend', wowBadge(delta, prev));
       }
     }
   });
 
-  // ATA / ETA cards
-  ['kpi-ata-w1', 'kpi-eta-pred', 'eta-pred-kpi'].forEach(id => {
+  // ATA / ETA cards — IDs: kpi-ata-pct, kpi-ata-w1, kpi-eta-pred, eta-pred-kpi
+  [['kpi-ata-pct', w.ata_delta], ['kpi-ata-w1', w.ata_w1_delta], ['kpi-eta-pred', w.ata_delta], ['eta-pred-kpi', w.ata_delta]].forEach(([id, delta]) => {
     const el = document.getElementById(id);
     if (el) {
-      const sub = el.closest('.kpi-card, .dir-card');
-      if (sub && !sub.querySelector('.wow-badge')) {
-        sub.insertAdjacentHTML('beforeend', wowBadge(w.ata_delta, prev));
+      const card = el.closest('.kpi-card, .dir-card');
+      if (card && !card.querySelector('.wow-badge')) {
+        card.insertAdjacentHTML('beforeend', wowBadge(delta, prev));
       }
     }
   });

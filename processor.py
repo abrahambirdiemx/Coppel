@@ -12,7 +12,7 @@ ETA PREDICTIVO: computed as (ATA Birdie col H) − (ATA/ETA Coppel col O) in day
 """
 
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import datetime, date as date_type
 
 
 # ---------------------------------------------------------------------------
@@ -51,6 +51,71 @@ def _int(val: str) -> int | None:
 
 def _has_value(val: str) -> bool:
     return bool(val and str(val).strip())
+
+
+def _parse_fecha(val) -> date_type | None:
+    """Parse Fecha de creación — handles datetime, date, or string."""
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val.date()
+    if isinstance(val, date_type):
+        return val
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%m/%d/%Y"):
+        try:
+            return datetime.strptime(str(val).strip(), fmt).date()
+        except ValueError:
+            pass
+    return None
+
+
+def _weekly_trend(rows: list[dict], atd_col: str = "Diferencia", ata_col: str = "Diferencia.1") -> tuple[list, dict]:
+    """
+    Groups rows by ISO week of 'Fecha de creación'.
+    Returns (weekly_trend list, wow dict) using last 2 weeks with n>=10.
+    """
+    from collections import defaultdict
+
+    buckets: dict[str, list[dict]] = defaultdict(list)
+    for r in rows:
+        d = _parse_fecha(r.get("Fecha de creación", ""))
+        if d:
+            iso = d.isocalendar()
+            buckets[f"{iso[0]}-W{iso[1]:02d}"].append(r)
+
+    weekly_trend = []
+    for wk in sorted(buckets.keys()):
+        wrows = buckets[wk]
+        if len(wrows) < 10:
+            continue
+        av = [r for r in wrows if _int(r.get(atd_col, "")) is not None]
+        aa = [r for r in wrows if _int(r.get(ata_col, "")) is not None]
+        atd_ex = sum(1 for r in av if _int(r[atd_col]) == 0)
+        ata_ex = sum(1 for r in aa if _int(r[ata_col]) == 0)
+        ata_w1c = sum(1 for r in aa if abs(_int(r[ata_col])) <= 1)
+        weekly_trend.append({
+            "week": wk,
+            "n": len(wrows),
+            "atd_pct": _pct(atd_ex, len(av)),
+            "ata_pct": _pct(ata_ex, len(aa)),
+            "ata_w1_pct": _pct(ata_w1c, len(aa)),
+        })
+
+    wow: dict = {}
+    if len(weekly_trend) >= 2:
+        cur = weekly_trend[-1]
+        prv = weekly_trend[-2]
+        wow = {
+            "current_week": cur["week"],
+            "prev_week": prv["week"],
+            "atd_delta": round(cur["atd_pct"] - prv["atd_pct"], 1),
+            "ata_delta": round(cur["ata_pct"] - prv["ata_pct"], 1),
+            "ata_w1_delta": round(cur["ata_w1_pct"] - prv["ata_w1_pct"], 1),
+            "n_current": cur["n"],
+            "n_prev": prv["n"],
+        }
+
+    return weekly_trend, wow
 
 
 def _pct(count: int, total: int) -> float:
@@ -204,6 +269,9 @@ def process(rows: list[dict]) -> dict:
     cntr_counts = Counter(r.get("Contenedor", "").strip() for r in rows if _has_value(r.get("Contenedor", "")))
     duplicates = sum(1 for v in cntr_counts.values() if v > 1)
 
+    # --- Weekly trend & WoW ---------------------------------------------------
+    weekly_trend, wow = _weekly_trend(rows)
+
     # --- Table (all rows, raw) ------------------------------------------------
     table_cols = [
         "Contenedor", "Puerto origen", "Puerto arribo Birdie",
@@ -252,5 +320,7 @@ def process(rows: list[dict]) -> dict:
         "navieras": navieras,
         "puertos": puertos,
         "comment_groups": comment_groups,
+        "weekly_trend": weekly_trend,
+        "wow": wow,
         "table": table,
     }
