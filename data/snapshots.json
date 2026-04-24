@@ -1,0 +1,17 @@
+[
+  {
+    "timestamp": "2026-04-17T00:00:00",
+    "label": "17/04/2026 — Excel baseline (990 contenedores)",
+    "total": 990,
+    "sailing": 347,
+    "discharged": 418,
+    "arrived": 26,
+    "atd_pct": 93.0,
+    "atd_within1": 98.0,
+    "ata_pct": 74.8,
+    "ata_within1": 95.7,
+    "eta_pct_w1": 96.4,
+    "eta_n": 418,
+    "weeks_count": 6
+  }
+]
