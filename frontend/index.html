@@ -10,19 +10,19 @@
 
 <style>
   :root {
-    --bg: #0a0c10;
-    --bg2: #111418;
-    --bg3: #181c22;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.13);
-    --text: #e8eaf0;
-    --text2: #8892a4;
-    --text3: #4a5568;
-    --accent: #00d4aa;
-    --accent2: #0088ff;
-    --warn: #f5a623;
-    --danger: #ff4d6d;
-    --good: #00d4aa;
+    --bg:      #f6f1ec;
+    --bg2:     #ffffff;
+    --bg3:     #ede8e1;
+    --border:  rgba(57,108,180,0.13);
+    --border2: rgba(57,108,180,0.24);
+    --text:    #64a0ff;
+    --text2:   #396cb4;
+    --text3:   #96afc8;
+    --accent:  #396cb4;
+    --accent2: #6adcf2;
+    --warn:    #e8952a;
+    --danger:  #e04060;
+    --good:    #79ddae;
     --font-sans: 'Raleway', sans-serif;
     --font-mono: 'DM Mono', monospace;
     --radius: 10px;
@@ -44,6 +44,7 @@
   .header {
     background: var(--bg2);
     border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 6px rgba(57,108,180,0.08);
     padding: 0 32px;
     display: flex;
     align-items: center;
@@ -60,14 +61,14 @@
   }
   .logo-mark {
     width: 28px; height: 28px;
-    background: var(--accent);
+    background: #396cb4;
     border-radius: 7px;
     display: flex; align-items: center; justify-content: center;
   }
-  .logo-mark svg { width: 16px; height: 16px; }
-  .logo-text { font-weight: 600; font-size: 15px; letter-spacing: -0.2px; }
+  .logo-mark svg { width: 16px; height: 16px; stroke: #fff; }
+  .logo-text { font-weight: 700; font-size: 15px; letter-spacing: -0.2px; color: #396cb4; }
   .logo-sep { color: var(--text3); margin: 0 6px; }
-  .logo-client { color: var(--text2); font-weight: 400; }
+  .logo-client { color: #79ddae; font-weight: 600; }
 
   .header-right {
     display: flex;
@@ -144,7 +145,7 @@
   }
   .nav-item:hover { background: var(--bg3); color: var(--text); }
   .nav-item.active {
-    background: rgba(0,212,170,0.07);
+    background: rgba(57,108,180,0.08);
     color: var(--accent);
     border-left-color: var(--accent);
   }
@@ -165,7 +166,7 @@
     display: flex; align-items: baseline; justify-content: space-between;
     margin-bottom: 24px;
   }
-  .page-title { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  .page-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: #396cb4; }
   .page-meta { font-size: 12px; color: var(--text3); font-family: var(--font-mono); }
 
   /* KPI CARDS */
@@ -182,6 +183,7 @@
     padding: 18px 20px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 1px 4px rgba(57,108,180,0.07);
   }
   .kpi-card::before {
     content:'';
@@ -194,7 +196,7 @@
   .kpi-card.warn { --card-accent: var(--warn); }
   .kpi-card.info { --card-accent: var(--accent2); }
   .kpi-card.neutral { --card-accent: var(--text3); }
-  .kpi-label { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .kpi-label { font-size: 11px; font-weight: 600; color: #6adcf2; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
 
   /* Snapshot history table */
   .snap-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -205,14 +207,14 @@
   }
   .snap-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .snap-table tr:last-child td { border-bottom: none; }
-  .snap-table tr.snap-current td { background: rgba(0,212,170,0.04); }
+  .snap-table tr.snap-current td { background: rgba(57,108,180,0.05); }
   .snap-delta-up   { color: var(--good);   font-size: 11px; margin-left: 4px; }
   .snap-delta-down { color: var(--danger); font-size: 11px; margin-left: 4px; }
   .snap-delta-flat { color: var(--text3);  font-size: 11px; margin-left: 4px; }
   .snap-label { font-family: var(--font-mono); font-size: 12px; color: var(--text2); }
   .snap-badge-new {
     display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px;
-    background: rgba(0,212,170,0.15); color: var(--accent); border-radius: 4px;
+    background: rgba(57,108,180,0.12); color: var(--accent); border-radius: 4px;
     margin-left: 6px; vertical-align: middle;
   }
   /* WoW weekly trend table */
@@ -221,7 +223,7 @@
     padding: 18px 20px; margin-bottom: 20px;
   }
   .wow-section-title {
-    font-size: 13px; font-weight: 600; color: var(--text2);
+    font-size: 13px; font-weight: 700; color: #396cb4;
     text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px;
   }
   .wow-trend-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -233,7 +235,7 @@
   .wow-trend-table th:first-child { text-align: left; }
   .wow-trend-table td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); }
   .wow-trend-table td:first-child { text-align: left; font-family: var(--font-mono); font-size: 12px; }
-  .wow-trend-table tr:last-child td { background: rgba(0,212,170,0.04); }
+  .wow-trend-table tr:last-child td { background: rgba(57,108,180,0.05); }
   .wow-trend-table tr:last-child td { border-bottom: none; }
   .wt-up   { color: var(--good); }
   .wt-down { color: var(--danger); }
@@ -245,13 +247,14 @@
     font-size: 11px; font-family: var(--font-mono); font-weight: 500;
     padding: 2px 7px; border-radius: 4px; margin-top: 5px;
   }
-  .wow-badge.up   { background: rgba(0,212,170,0.12); color: var(--good); }
-  .wow-badge.down { background: rgba(255,77,109,0.12); color: var(--danger); }
+  .wow-badge.up   { background: rgba(121,221,174,0.18); color: #2a9468; }
+  .wow-badge.down { background: rgba(224,64,96,0.10);  color: var(--danger); }
   .wow-badge.flat { background: var(--bg3); color: var(--text3); }
   .kpi-value { font-size: 28px; font-weight: 600; letter-spacing: -1px; line-height: 1; margin-bottom: 6px; }
-  .kpi-value.good { color: var(--good); }
+  .kpi-value { color: #396cb4; }
+  .kpi-value.good { color: #2a9468; }
   .kpi-value.warn { color: var(--warn); }
-  .kpi-value.info { color: var(--accent2); }
+  .kpi-value.info { color: #2b9bb8; }
   .kpi-sub { font-size: 11px; color: var(--text2); }
 
   /* CHARTS GRID */
@@ -266,11 +269,12 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 20px 22px;
+    box-shadow: 0 1px 4px rgba(57,108,180,0.07);
   }
   .chart-title {
     font-size: 13px;
-    font-weight: 500;
-    color: var(--text2);
+    font-weight: 600;
+    color: #396cb4;
     margin-bottom: 16px;
     display: flex; align-items: center; justify-content: space-between;
   }
@@ -280,7 +284,7 @@
     background: var(--bg3);
     padding: 3px 8px;
     border-radius: 4px;
-    color: var(--text3);
+    color: #64a0ff;
   }
 
   /* BARS */
@@ -393,7 +397,7 @@
     font-size: 11px;
   }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
+  tr:hover td { background: rgba(57,108,180,0.04); }
   .td-cntr { color: var(--text); font-weight: 500; }
   .diff-pos { color: var(--warn); }
   .diff-neg { color: var(--danger); }
@@ -409,17 +413,17 @@
     text-transform: uppercase;
     font-family: var(--font-sans);
   }
-  .status-sailing { background: rgba(0,136,255,0.15); color: #66aaff; }
-  .status-discharged { background: rgba(0,212,170,0.12); color: var(--good); }
-  .status-arrived { background: rgba(245,166,35,0.12); color: var(--warn); }
-  .status-untracked { background: rgba(255,77,109,0.12); color: var(--danger); }
+  .status-sailing { background: rgba(106,220,242,0.18); color: #2b9bb8; }
+  .status-discharged { background: rgba(121,221,174,0.18); color: #2a9468; }
+  .status-arrived { background: rgba(232,149,42,0.15); color: var(--warn); }
+  .status-untracked { background: rgba(224,64,96,0.12); color: var(--danger); }
   .comment-cell { max-width: 180px; overflow: hidden; text-overflow: ellipsis; color: var(--text3); font-family: var(--font-sans); font-size: 11px; }
 
   /* GDRIVE MODAL */
   .modal-overlay {
     display: none;
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(40,60,100,0.45);
     z-index: 999;
     align-items: center;
     justify-content: center;
@@ -478,8 +482,8 @@
   }
   .btn-load:hover { opacity: 0.85; }
   .modal-hint {
-    background: rgba(0,212,170,0.07);
-    border: 1px solid rgba(0,212,170,0.2);
+    background: rgba(57,108,180,0.06);
+    border: 1px solid rgba(57,108,180,0.18);
     border-radius: var(--radius);
     padding: 12px 14px;
     font-size: 12px;
@@ -487,7 +491,7 @@
     margin-top: 14px;
     line-height: 1.6;
   }
-  .modal-hint code { background: rgba(0,212,170,0.15); padding: 1px 5px; border-radius: 3px; font-family: var(--font-mono); }
+  .modal-hint code { background: rgba(57,108,180,0.12); padding: 1px 5px; border-radius: 3px; font-family: var(--font-mono); }
 
   /* ALERT BANNER */
   .alert-banner {
@@ -527,7 +531,7 @@
   <div class="header-right">
     <div class="data-source-badge" id="sourceInfo" onclick="openModal()">
       <span class="dot" id="sourceDot"></span>
-      <span id="sourceText" style="font-size:11px;">Vista-Trackings · 07/04/2026</span>
+      <span id="sourceText" style="font-size:11px;">Google Sheets · 24/04/2026</span>
     </div>
     <button class="btn-connect" onclick="openModal()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -983,19 +987,19 @@
       <div class="chart-card">
         <div class="chart-title">Recomendaciones para contrato anual</div>
         <div style="display:flex;flex-direction:column;gap:12px;margin-top:6px;">
-          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.15);border-radius:var(--radius);">
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(121,221,174,0.10);border:1px solid rgba(121,221,174,0.25);border-radius:var(--radius);">
             <span style="color:var(--good);font-size:16px;margin-top:1px;">✓</span>
             <div><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;">Enmarcar 91.2% ATD como métrica base del contrato</div><div style="font-size:12px;color:var(--text2);">La precisión de salida es el indicador más relevante para planificación. Proponer SLA de 90%+ exacto.</div></div>
           </div>
-          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(0,136,255,0.06);border:1px solid rgba(0,136,255,0.15);border-radius:var(--radius);">
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(106,220,242,0.10);border:1px solid rgba(106,220,242,0.25);border-radius:var(--radius);">
             <span style="color:var(--accent2);font-size:16px;margin-top:1px;">→</span>
             <div><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;">Acordar definición estándar de POL</div><div style="font-size:12px;color:var(--text2);">Puerto de booking vs puerto físico de zarpe. Elimina la mayor fuente de discrepancias percibidas (14 outliers).</div></div>
           </div>
-          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(0,136,255,0.06);border:1px solid rgba(0,136,255,0.15);border-radius:var(--radius);">
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(106,220,242,0.10);border:1px solid rgba(106,220,242,0.25);border-radius:var(--radius);">
             <span style="color:var(--accent2);font-size:16px;margin-top:1px;">→</span>
             <div><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;">Acordar definición de evento ATA</div><div style="font-size:12px;color:var(--text2);">Señal AIS de entrada vs atraque operativo. El sesgo de −0.59 días desaparece con una definición compartida.</div></div>
           </div>
-          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.15);border-radius:var(--radius);">
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(232,149,42,0.10);border:1px solid rgba(232,149,42,0.25);border-radius:var(--radius);">
             <span style="color:var(--warn);font-size:16px;margin-top:1px;">⚠</span>
             <div><div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;">Revisar feed de datos Evergreen</div><div style="font-size:12px;color:var(--text2);">61.5% de exactitud con 26 contenedores. Muestra suficiente para investigar problema técnico con esa naviera.</div></div>
           </div>
@@ -1279,7 +1283,7 @@ function renderKPIs(d) {
   document.getElementById('dir-early').textContent = '4.4%';
   document.getElementById('dir-late').textContent = '4.4%';
 
-  document.getElementById('overviewMeta').textContent = 'n=' + s.total + ' · actualizado 07/04/2026';
+  document.getElementById('overviewMeta').textContent = 'n=' + s.total + ' · actualizado 24/04/2026';
 
   // ATD page
   document.getElementById('atd-kpi1').textContent = s.atd_pct + '%';
@@ -1314,11 +1318,11 @@ function destroyChart(id) {
   if(chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
 }
 
-const gridColor = 'rgba(255,255,255,0.05)';
-const textColor = '#6b7280';
+const gridColor = 'rgba(57,108,180,0.10)';
+const textColor = '#64a0ff';
 const baseOpts = {
   responsive: true, maintainAspectRatio: false,
-  plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a1f2a', titleColor: '#e8eaf0', bodyColor: '#8892a4', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1 } },
+  plugins: { legend: { display: false }, tooltip: { backgroundColor: '#ffffff', titleColor: '#396cb4', bodyColor: '#64a0ff', borderColor: 'rgba(57,108,180,0.25)', borderWidth: 1 } },
   scales: {
     x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11, family: "'DM Mono'" } } },
     y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11, family: "'DM Mono'" } } }
@@ -1380,11 +1384,11 @@ function renderCharts(d) {
     data: {
       labels: navSorted.map(x=>x.name),
       datasets: [
-        { label:'Exacto', data: navSorted.map(x=>Math.round(x.n*x.pct/100)), backgroundColor: '#00d4aa', borderRadius: 3 },
-        { label:'Con discrepancia', data: navSorted.map(x=>x.n-Math.round(x.n*x.pct/100)), backgroundColor: '#ff4d6d', borderRadius: 3 }
+        { label:'Exacto', data: navSorted.map(x=>Math.round(x.n*x.pct/100)), backgroundColor: '#79ddae', borderRadius: 3 },
+        { label:'Con discrepancia', data: navSorted.map(x=>x.n-Math.round(x.n*x.pct/100)), backgroundColor: '#e04060', borderRadius: 3 }
       ]
     },
-    options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { display: true, labels: { color: '#8892a4', font:{size:11}, boxWidth: 10 } } }, scales: { ...baseOpts.scales, x:{ ...baseOpts.scales.x, stacked:true }, y:{ ...baseOpts.scales.y, stacked:true } } }
+    options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { display: true, labels: { color: '#396cb4', font:{size:11}, boxWidth: 10 } } }, scales: { ...baseOpts.scales, x:{ ...baseOpts.scales.x, stacked:true }, y:{ ...baseOpts.scales.y, stacked:true } } }
   });
 
   // Comments chart
@@ -1393,9 +1397,9 @@ function renderCharts(d) {
     type: 'doughnut',
     data: {
       labels: d.comment_groups.map(x=>x.label),
-      datasets: [{ data: d.comment_groups.map(x=>x.count), backgroundColor: ['#f5a623','#ff4d6d','#0088ff','#00d4aa','#a78bfa','#fb923c'], borderWidth: 0, hoverOffset: 4 }]
+      datasets: [{ data: d.comment_groups.map(x=>x.count), backgroundColor: ['#396cb4','#6adcf2','#79ddae','#e8952a','#64a0ff','#e04060'], borderWidth: 0, hoverOffset: 4 }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#8892a4', font:{size:10}, boxWidth: 10, padding: 8 } }, tooltip: { backgroundColor: '#1a1f2a', titleColor: '#e8eaf0', bodyColor: '#8892a4', borderColor: 'rgba(255,255,255,0.1)', borderWidth:1 } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#396cb4', font:{size:10}, boxWidth: 10, padding: 8 } }, tooltip: { backgroundColor: '#ffffff', titleColor: '#396cb4', bodyColor: '#64a0ff', borderColor: 'rgba(57,108,180,0.25)', borderWidth:1 } } }
   });
 
   // ATA Navieras charts
@@ -1407,12 +1411,12 @@ function renderCharts(d) {
       data: {
         labels: ataNav.map(x=>x.name),
         datasets: [
-          { label:'Exacto', data: ataNav.map(x=>Math.round(x.n*x.pct_exact/100)), backgroundColor: '#00d4aa', borderRadius: 3 },
-          { label:'±1 día adicional', data: ataNav.map(x=>Math.round(x.n*(x.pct_w1-x.pct_exact)/100)), backgroundColor: '#f5a623', borderRadius: 3 },
-          { label:'>1 día', data: ataNav.map(x=>x.n-Math.round(x.n*x.pct_w1/100)), backgroundColor: '#ff4d6d', borderRadius: 3 }
+          { label:'Exacto', data: ataNav.map(x=>Math.round(x.n*x.pct_exact/100)), backgroundColor: '#79ddae', borderRadius: 3 },
+          { label:'±1 día adicional', data: ataNav.map(x=>Math.round(x.n*(x.pct_w1-x.pct_exact)/100)), backgroundColor: '#e8952a', borderRadius: 3 },
+          { label:'>1 día', data: ataNav.map(x=>x.n-Math.round(x.n*x.pct_w1/100)), backgroundColor: '#e04060', borderRadius: 3 }
         ]
       },
-      options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { display: true, labels: { color: '#8892a4', font:{size:10}, boxWidth: 8 } } }, scales: { ...baseOpts.scales, x:{ ...baseOpts.scales.x, stacked:true }, y:{ ...baseOpts.scales.y, stacked:true } } }
+      options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { display: true, labels: { color: '#64a0ff', font:{size:10}, boxWidth: 8 } } }, scales: { ...baseOpts.scales, x:{ ...baseOpts.scales.x, stacked:true }, y:{ ...baseOpts.scales.y, stacked:true } } }
     });
   }
 
@@ -1658,7 +1662,7 @@ document.getElementById('gdriveModal').addEventListener('click', function(e) {
   tableData = raw;
   if(typeof renderTable === 'function') renderTable(raw);
   const meta = document.getElementById('tableMeta');
-  if(meta) meta.textContent = 'Vista-Trackings · 17/04/2026 · ' + raw.length + ' contenedores';
+  if(meta) meta.textContent = 'Google Sheets · 24/04/2026 · ' + raw.length + ' contenedores';
 })();
 </script>
 
