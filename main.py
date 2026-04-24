@@ -10,6 +10,7 @@ load_dotenv()
 
 from sheets import get_sheet_rows
 from processor import process
+from snapshots import save_snapshot, load_snapshots
 
 app = FastAPI(title="Birdie Tracking Accuracy API")
 
@@ -53,7 +54,9 @@ def get_data():
     if not rows:
         raise HTTPException(status_code=404, detail="No data found in sheet.")
 
-    return process(rows)
+    result = process(rows)
+    save_snapshot(result)
+    return result
 
 
 @app.post("/api/data/reload")
@@ -65,12 +68,18 @@ def reload_data():
     return get_data()
 
 
+@app.get("/api/snapshots")
+def get_snapshots():
+    """Returns stored accuracy snapshots, newest first."""
+    return {"snapshots": load_snapshots()}
+
+
 @app.get("/api/version")
 def version():
     """Quick check — confirms deployed commit and feature flags."""
     return {
-        "version": "2026-04-17-wow",
-        "features": ["weekly_trend", "wow_badges", "column_fix_puerto_arribo"],
+        "version": "2026-04-24-snapshots",
+        "features": ["weekly_trend", "wow_badges", "snapshots", "column_fix_puerto_arribo"],
     }
 
 
