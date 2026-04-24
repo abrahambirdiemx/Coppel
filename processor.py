@@ -273,22 +273,32 @@ def process(rows: list[dict]) -> dict:
     weekly_trend, wow = _weekly_trend(rows)
 
     # --- Table (all rows, raw) ------------------------------------------------
-    # Column names as they appear in the actual Google Sheet
+    # Column names — handles both old sheet ("ATD Birdie", "ATA/ETA Birdie")
+    # and new sheet ("ATD", "ATA").
+    def _atd_birdie(r):
+        return r.get("ATD Birdie", r.get("ATD", ""))
+
+    def _ata_birdie(r):
+        return r.get("ATA/ETA Birdie", r.get("ATA Birdie", r.get("ATA", "")))
+
+    def _atd_coppel(r):
+        return r.get("ATD Coppel", r.get("NETD Coppel", ""))
+
     table = [
         {
-            "Contenedor":         r.get("Contenedor", ""),
-            "Puerto origen":      r.get("Puerto origen", ""),
+            "Contenedor":           r.get("Contenedor", ""),
+            "Puerto origen":        r.get("Puerto origen", ""),
             "Puerto arribo Birdie": r.get("Puerto arribo", r.get("Puerto arribo Birdie", "")),
-            "Línea de entrega":   r.get("Línea de entrega", ""),
-            "ATD Birdie":         r.get("ATD Birdie", ""),
-            "ATD Coppel":         r.get("ATD Coppel", ""),
-            "Diferencia":         r.get("Diferencia", ""),
-            "ATA Birdie":         r.get("ATA/ETA Birdie", r.get("ATA Birdie", "")),
-            "ATA/ETA Coppel":     r.get("ATA/ETA Coppel", ""),
-            "Diferencia.1":       r.get("Diferencia.1", ""),
-            "ETA Birdie":         r.get("ETA Birdie", ""),
-            "Status de solicitud": r.get("Status de solicitud", ""),
-            "Comentarios Coppel": r.get("Comentarios Coppel", ""),
+            "Línea de entrega":     r.get("Línea de entrega", ""),
+            "ATD Birdie":           _atd_birdie(r),
+            "ATD Coppel":           _atd_coppel(r),
+            "Diferencia":           r.get("Diferencia", ""),
+            "ATA Birdie":           _ata_birdie(r),
+            "ATA/ETA Coppel":       r.get("ATA/ETA Coppel", ""),
+            "Diferencia.1":         r.get("Diferencia.1", ""),
+            "ETA Birdie":           r.get("ETA Birdie", r.get("ETA", "")),
+            "Status de solicitud":  r.get("Status de solicitud", ""),
+            "Comentarios Coppel":   r.get("Comentarios Coppel", ""),
         }
         for r in rows
     ]

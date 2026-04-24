@@ -78,8 +78,8 @@ def get_snapshots():
 def version():
     """Quick check — confirms deployed commit and feature flags."""
     return {
-        "version": "2026-04-24-snapshots",
-        "features": ["weekly_trend", "wow_badges", "snapshots", "column_fix_puerto_arribo"],
+        "version": "2026-04-24-v2",
+        "features": ["weekly_trend", "wow_badges", "snapshots", "column_fix_new_sheet"],
     }
 
 
@@ -95,7 +95,7 @@ def debug():
         rows = get_sheet_rows()
         return {
             "status": "ok",
-            "code_version": "f85b90d",
+            "code_version": "f79a308",
             "sheet_id": sheet_id,
             "sheet_name": sheet_name,
             "service_account_file": sa_file,
@@ -106,7 +106,7 @@ def debug():
     except Exception as exc:
         return {
             "status": "error",
-            "code_version": "f85b90d",
+            "code_version": "f79a308",
             "sheet_id": sheet_id,
             "sheet_name": sheet_name,
             "service_account_file": sa_file,
