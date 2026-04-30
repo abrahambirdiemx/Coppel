@@ -54,18 +54,12 @@ def _has_value(val) -> bool:
     return bool(val and str(val).strip())
 
 
-def _has_atd_data(r: dict) -> bool:
-    """Both ATD dates must have real values — prevents formula 0−0=0 false positives."""
-    birdie = r.get("ATD Birdie", r.get("ATD", ""))
-    coppel = r.get("ATD Coppel", r.get("NETD Coppel", ""))
-    return _has_value(birdie) and _has_value(coppel)
+_ATA_STATUSES = {"Discharged", "Arrived"}
+_ALL_STATUSES  = {"Discharged", "Arrived", "Sailing"}
 
 
-def _has_ata_data(r: dict) -> bool:
-    """Both ATA dates must have real values — prevents formula 0−0=0 false positives."""
-    birdie = r.get("ATA/ETA Birdie", r.get("ATA Birdie", r.get("ATA", "")))
-    coppel = r.get("ATA/ETA Coppel", "")
-    return _has_value(birdie) and _has_value(coppel)
+def _status(r: dict) -> str:
+    return r.get("Status de solicitud", "").strip()
 
 
 def _parse_fecha(val) -> date_type | None:
@@ -103,8 +97,8 @@ def _weekly_trend(rows: list[dict], atd_col: str = "Diferencia", ata_col: str = 
         wrows = buckets[wk]
         if len(wrows) < 10:
             continue
-        av = [r for r in wrows if _int(r.get(atd_col, "")) is not None and _has_atd_data(r)]
-        aa = [r for r in wrows if _int(r.get(ata_col, "")) is not None and _has_ata_data(r)]
+        av = [r for r in wrows if _int(r.get(atd_col, "")) is not None and _status(r) in _ALL_STATUSES and _has_value(r.get("Contenedor",""))]
+        aa = [r for r in wrows if _int(r.get(ata_col, "")) is not None and _status(r) in _ATA_STATUSES and _has_value(r.get("Contenedor",""))]
         atd_ex = sum(1 for r in av if _int(r[atd_col]) == 0)
         ata_ex = sum(1 for r in aa if _int(r[ata_col]) == 0)
         ata_w1c = sum(1 for r in aa if abs(_int(r[ata_col])) <= 1)
@@ -194,23 +188,28 @@ def _atd_group(rows: list[dict], group_key: str, min_n: int = 2) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def process(rows: list[dict]) -> dict:
-    total = len(rows)
 
-    # --- ATD rows — Diferencia valid AND both source dates non-empty -----------
+    # --- ATD rows: Diferencia es entero válido Y el contenedor tiene status real
+    # (excluye filas vacías donde la fórmula devuelve 0 por celdas vacías)
     atd_rows = [
         r for r in rows
-        if _int(r.get("Diferencia", "")) is not None and _has_atd_data(r)
+        if _int(r.get("Diferencia", "")) is not None
+        and _status(r) in _ALL_STATUSES
+        and _has_value(r.get("Contenedor", ""))
     ]
     atd_diffs = [_int(r["Diferencia"]) for r in atd_rows]
 
     atd_exact = sum(1 for d in atd_diffs if d == 0)
-    atd_w1 = sum(1 for d in atd_diffs if abs(d) <= 1)
+    atd_w1    = sum(1 for d in atd_diffs if abs(d) <= 1)
     atd_total = len(atd_diffs)
 
-    # --- ATA rows — Diferencia.1 valid AND both source dates non-empty --------
+    # --- ATA rows: SOLO Discharged/Arrived con Diferencia.1 válida
+    # Sailing aún no tiene ATA real → su Diferencia.1 sería 0 falso por fórmula vacía
     ata_rows = [
         r for r in rows
-        if _int(r.get("Diferencia.1", "")) is not None and _has_ata_data(r)
+        if _int(r.get("Diferencia.1", "")) is not None
+        and _status(r) in _ATA_STATUSES
+        and _has_value(r.get("Contenedor", ""))
     ]
     ata_diffs = [_int(r["Diferencia.1"]) for r in ata_rows]
 
@@ -218,8 +217,12 @@ def process(rows: list[dict]) -> dict:
     ata_w1 = sum(1 for d in ata_diffs if abs(d) <= 1)
     ata_total = len(ata_diffs)
 
+    # --- Total real: filas con Contenedor no vacío ---------------------------
+    real_rows = [r for r in rows if _has_value(r.get("Contenedor", ""))]
+    total = len(real_rows)
+
     # --- Status counts --------------------------------------------------------
-    status_counts = Counter(r.get("Status de solicitud", "").strip() for r in rows)
+    status_counts = Counter(_status(r) for r in real_rows)
 
     # --- ATD distribution -----------------------------------------------------
     atd_dist_counter: Counter = Counter(atd_diffs)
@@ -253,12 +256,12 @@ def process(rows: list[dict]) -> dict:
     puertos_raw = _atd_group(atd_rows, "Puerto origen", min_n=1)
     puertos = sorted(puertos_raw, key=lambda x: -x["n"])[:12]
 
-    # --- ETA prediction (Discharged rows con ambas fechas reales) --------------
+    # --- ETA prediction: Discharged con Diferencia.1 válida y contenedor real --
     discharged = [
         r for r in rows
-        if r.get("Status de solicitud", "").strip() == "Discharged"
+        if _status(r) == "Discharged"
         and _int(r.get("Diferencia.1", "")) is not None
-        and _has_ata_data(r)
+        and _has_value(r.get("Contenedor", ""))
     ]
     eta_diffs = [_int(r["Diferencia.1"]) for r in discharged]
     eta_n = len(eta_diffs)
@@ -273,7 +276,7 @@ def process(rows: list[dict]) -> dict:
 
     # --- Comment groups -------------------------------------------------------
     comment_counter: Counter = Counter()
-    for r in rows:
+    for r in real_rows:
         c = r.get("Comentarios Coppel", "").strip()
         if c:
             comment_counter[c] += 1
@@ -283,14 +286,14 @@ def process(rows: list[dict]) -> dict:
     ]
 
     # --- Missing SO (Línea de entrega empty) ----------------------------------
-    missing_so = sum(1 for r in rows if not _has_value(r.get("Línea de entrega", "")))
+    missing_so = sum(1 for r in real_rows if not _has_value(r.get("Línea de entrega", "")))
 
     # --- Duplicates (Contenedor appearing more than once) ---------------------
-    cntr_counts = Counter(r.get("Contenedor", "").strip() for r in rows if _has_value(r.get("Contenedor", "")))
+    cntr_counts = Counter(r.get("Contenedor", "").strip() for r in real_rows)
     duplicates = sum(1 for v in cntr_counts.values() if v > 1)
 
     # --- Weekly trend & WoW ---------------------------------------------------
-    weekly_trend, wow = _weekly_trend(rows)
+    weekly_trend, wow = _weekly_trend(real_rows)
 
     # --- Table (all rows, raw) ------------------------------------------------
     # Column names — handles both old sheet ("ATD Birdie", "ATA/ETA Birdie")
@@ -320,7 +323,7 @@ def process(rows: list[dict]) -> dict:
             "Status de solicitud":  r.get("Status de solicitud", ""),
             "Comentarios Coppel":   r.get("Comentarios Coppel", ""),
         }
-        for r in rows
+        for r in real_rows
     ]
 
     return {
