@@ -50,8 +50,22 @@ def _int(val: str) -> int | None:
         return None
 
 
-def _has_value(val: str) -> bool:
+def _has_value(val) -> bool:
     return bool(val and str(val).strip())
+
+
+def _has_atd_data(r: dict) -> bool:
+    """Both ATD dates must have real values — prevents formula 0−0=0 false positives."""
+    birdie = r.get("ATD Birdie", r.get("ATD", ""))
+    coppel = r.get("ATD Coppel", r.get("NETD Coppel", ""))
+    return _has_value(birdie) and _has_value(coppel)
+
+
+def _has_ata_data(r: dict) -> bool:
+    """Both ATA dates must have real values — prevents formula 0−0=0 false positives."""
+    birdie = r.get("ATA/ETA Birdie", r.get("ATA Birdie", r.get("ATA", "")))
+    coppel = r.get("ATA/ETA Coppel", "")
+    return _has_value(birdie) and _has_value(coppel)
 
 
 def _parse_fecha(val) -> date_type | None:
@@ -89,8 +103,8 @@ def _weekly_trend(rows: list[dict], atd_col: str = "Diferencia", ata_col: str = 
         wrows = buckets[wk]
         if len(wrows) < 10:
             continue
-        av = [r for r in wrows if _int(r.get(atd_col, "")) is not None]
-        aa = [r for r in wrows if _int(r.get(ata_col, "")) is not None]
+        av = [r for r in wrows if _int(r.get(atd_col, "")) is not None and _has_atd_data(r)]
+        aa = [r for r in wrows if _int(r.get(ata_col, "")) is not None and _has_ata_data(r)]
         atd_ex = sum(1 for r in av if _int(r[atd_col]) == 0)
         ata_ex = sum(1 for r in aa if _int(r[ata_col]) == 0)
         ata_w1c = sum(1 for r in aa if abs(_int(r[ata_col])) <= 1)
@@ -182,16 +196,22 @@ def _atd_group(rows: list[dict], group_key: str, min_n: int = 2) -> list[dict]:
 def process(rows: list[dict]) -> dict:
     total = len(rows)
 
-    # --- ATD rows (both ATD dates present = Diferencia is a number) ----------
-    atd_rows = [r for r in rows if _int(r.get("Diferencia", "")) is not None]
+    # --- ATD rows — Diferencia valid AND both source dates non-empty -----------
+    atd_rows = [
+        r for r in rows
+        if _int(r.get("Diferencia", "")) is not None and _has_atd_data(r)
+    ]
     atd_diffs = [_int(r["Diferencia"]) for r in atd_rows]
 
     atd_exact = sum(1 for d in atd_diffs if d == 0)
     atd_w1 = sum(1 for d in atd_diffs if abs(d) <= 1)
     atd_total = len(atd_diffs)
 
-    # --- ATA rows (Diferencia.1 is a number) ----------------------------------
-    ata_rows = [r for r in rows if _int(r.get("Diferencia.1", "")) is not None]
+    # --- ATA rows — Diferencia.1 valid AND both source dates non-empty --------
+    ata_rows = [
+        r for r in rows
+        if _int(r.get("Diferencia.1", "")) is not None and _has_ata_data(r)
+    ]
     ata_diffs = [_int(r["Diferencia.1"]) for r in ata_rows]
 
     ata_exact = sum(1 for d in ata_diffs if d == 0)
@@ -233,12 +253,12 @@ def process(rows: list[dict]) -> dict:
     puertos_raw = _atd_group(atd_rows, "Puerto origen", min_n=1)
     puertos = sorted(puertos_raw, key=lambda x: -x["n"])[:12]
 
-    # --- ETA prediction (Discharged rows: ATA Birdie col H vs ATA/ETA Coppel col O) ---
-    # Diferencia.1 = ATA Birdie − ATA/ETA Coppel (pre-computed in sheet) — use directly.
+    # --- ETA prediction (Discharged rows con ambas fechas reales) --------------
     discharged = [
         r for r in rows
         if r.get("Status de solicitud", "").strip() == "Discharged"
         and _int(r.get("Diferencia.1", "")) is not None
+        and _has_ata_data(r)
     ]
     eta_diffs = [_int(r["Diferencia.1"]) for r in discharged]
     eta_n = len(eta_diffs)
