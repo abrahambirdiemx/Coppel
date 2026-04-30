@@ -628,7 +628,7 @@
           <div class="kpi-sub" id="kpi-ata-w1-sub">—</div>
         </div>
         <div class="kpi-card good">
-          <div class="kpi-label">ATA Birdie ±1 día vs ATA Coppel</div>
+          <div class="kpi-label">ETA Predictivo ±1 día</div>
           <div class="kpi-value good" id="kpi-eta-pred">—</div>
           <div class="kpi-sub" id="kpi-eta-pred-sub">—</div>
         </div>
@@ -856,9 +856,9 @@
         </div>
       </div>
       <div class="chart-card">
-        <div class="chart-title">Nota: ETA predictivo vs ATA real</div>
+        <div class="chart-title">Nota: ETA Predictivo</div>
         <p style="font-size:13px;color:var(--text2);line-height:1.8;">
-          La métrica principal es <strong style="color:var(--text);">ATA Birdie ±1 día vs ATA Coppel</strong> (excluye filas sin valor en Diferencia). La diferencia exacta (Δ=0) refleja coincidencia perfecta de fecha; ±1 día es la tolerancia operativa recomendada dado que Birdie registra señal AIS de llegada y Coppel registra atraque operativo — eventos que naturalmente difieren 0–1 días.
+          <strong style="color:var(--text);">ETA Predictivo ±1 día</strong> compara la fecha estimada de Birdie contra la fecha estimada de Coppel, solo para contenedores <em>Discharged</em> (ya descargados). Es diferente al <strong style="color:var(--text);">ATA ±1 día</strong> que mide precisión de llegada real sobre todos los contenedores con fecha ATA registrada. Diferencia exacta (Δ=0) = coincidencia perfecta; ±1 día es la tolerancia operativa recomendada.
         </p>
       </div>
     </div>
@@ -1263,7 +1263,7 @@ function renderKPIs(d) {
   document.getElementById('kpi-ata-w1-sub').textContent = (Math.round(s.ata_total * s.ata_within1 / 100)) + ' / ' + s.ata_total + ' dentro de ±1 día';
   const ep2 = d.eta_prediction || {};
   document.getElementById('kpi-eta-pred').textContent = (ep2.pct_w1 || '—') + '%';
-  document.getElementById('kpi-eta-pred-sub').textContent = 'ATA Birdie vs ATA Coppel ±1d · excl. vacíos · n=' + (ep2.n || '—');
+  document.getElementById('kpi-eta-pred-sub').textContent = 'ETA Birdie vs fecha estimada Coppel · solo Discharged · n=' + (ep2.n || '—');
 
   // ATA navieras page
   if(document.getElementById('ata-nav-count')) {
