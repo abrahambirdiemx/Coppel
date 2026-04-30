@@ -34,7 +34,7 @@ _BASELINE = {
 }
 
 # In-memory cache — survives across requests within the same process.
-_cache: list | None = None
+_cache = None
 
 
 def _ensure_dir():
