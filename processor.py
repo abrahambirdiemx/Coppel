@@ -1,14 +1,11 @@
 """
 Transforms raw Google Sheets rows into the metrics dict consumed by the dashboard.
 
-Sheet columns (hoja ag-grid) — confirmed by user:
-  H  ATA Birdie
-  O  ATA/ETA Coppel
+Diffs are ALWAYS computed from the source date columns (never from pre-computed
+"Diferencia" columns), making the code resilient to sheet column-order changes.
 
-NOTE: the processor uses column HEADER NAMES, not positions, so column
-letters are informational only — the dict lookup always finds the right column.
-
-ETA PREDICTIVO: computed as (ATA Birdie col H) − (ATA/ETA Coppel col O) in days.
+ATD diff  = ATD Birdie   − ATD Coppel      (departure accuracy)
+ATA diff  = ATA/ETA Birdie − ATA/ETA Coppel (arrival accuracy)
 """
 from __future__ import annotations
 
@@ -20,7 +17,7 @@ from datetime import datetime, date as date_type
 # Helpers
 # ---------------------------------------------------------------------------
 
-_DATE_FMTS = ("%d/%m/%Y", "%Y-%m-%d", "%m/%d/%Y")
+_DATE_FMTS = ("%d/%m/%Y", "%Y-%m-%d", "%m/%d/%Y", "%d-%b-%Y", "%d-%B-%Y")
 
 
 def _parse_date(val: str):
@@ -87,6 +84,22 @@ def _ata_coppel_val(r: dict) -> str:
     return r.get("ATA/ETA Coppel") or ""
 
 
+def _atd_diff(r: dict):
+    """ATD Birdie − ATD Coppel in days. None if either date missing."""
+    b, c = _atd_birdie_val(r), _atd_coppel_val(r)
+    if not _has_value(b) or not _has_value(c):
+        return None
+    return _date_diff(b, c)
+
+
+def _ata_diff(r: dict):
+    """ATA/ETA Birdie − ATA/ETA Coppel in days. None if either date missing."""
+    b, c = _ata_birdie_val(r), _ata_coppel_val(r)
+    if not _has_value(b) or not _has_value(c):
+        return None
+    return _date_diff(b, c)
+
+
 def _parse_fecha(val) -> date_type | None:
     """Parse Fecha de creación — handles datetime, date, or string."""
     if val is None:
@@ -95,7 +108,7 @@ def _parse_fecha(val) -> date_type | None:
         return val.date()
     if isinstance(val, date_type):
         return val
-    for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%m/%d/%Y"):
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%m/%d/%Y", "%d-%b-%Y", "%d-%B-%Y"):
         try:
             return datetime.strptime(str(val).strip(), fmt).date()
         except ValueError:
@@ -103,9 +116,10 @@ def _parse_fecha(val) -> date_type | None:
     return None
 
 
-def _weekly_trend(rows: list[dict], atd_col: str = "Diferencia", ata_col: str = "Diferencia.1") -> tuple[list, dict]:
+def _weekly_trend(rows: list[dict]) -> tuple[list, dict]:
     """
     Groups rows by ISO week of 'Fecha de creación'.
+    Diffs computed from date columns (column-order independent).
     Returns (weekly_trend list, wow dict) using last 2 weeks with n>=10.
     """
     from collections import defaultdict
@@ -122,11 +136,15 @@ def _weekly_trend(rows: list[dict], atd_col: str = "Diferencia", ata_col: str = 
         wrows = buckets[wk]
         if len(wrows) < 10:
             continue
-        av = [r for r in wrows if _int(r.get(atd_col, "")) is not None and _status(r) in _ALL_STATUSES and _has_value(r.get("Contenedor",""))]
-        aa = [r for r in wrows if _int(r.get(ata_col, "")) is not None and _status(r) in _ATA_STATUSES and _has_value(r.get("Contenedor",""))]
-        atd_ex = sum(1 for r in av if _int(r[atd_col]) == 0)
-        ata_ex = sum(1 for r in aa if _int(r[ata_col]) == 0)
-        ata_w1c = sum(1 for r in aa if abs(_int(r[ata_col])) <= 1)
+        av = [(r, _atd_diff(r)) for r in wrows
+              if _status(r) in _ALL_STATUSES and _has_value(r.get("Contenedor", ""))]
+        av = [(r, d) for r, d in av if d is not None]
+        aa = [(r, _ata_diff(r)) for r in wrows
+              if _status(r) in _ATA_STATUSES and _has_value(r.get("Contenedor", ""))]
+        aa = [(r, d) for r, d in aa if d is not None]
+        atd_ex  = sum(1 for _, d in av if d == 0)
+        ata_ex  = sum(1 for _, d in aa if d == 0)
+        ata_w1c = sum(1 for _, d in aa if abs(d) <= 1)
         weekly_trend.append({
             "week": wk,
             "n": len(wrows),
@@ -167,14 +185,14 @@ def _mean(values: list[int | float]) -> float:
 def _group_accuracy(
     rows: list[dict],
     group_key: str,
-    diff_col: str,
+    diff_fn,
     min_n: int = 2,
 ) -> list[dict]:
-    """Compute exact / within-1 / mean-diff per group for a given diff column."""
+    """Compute exact / within-1 / mean-diff per group using a diff function."""
     buckets: dict[str, list[int]] = defaultdict(list)
     for r in rows:
         name = r.get(group_key, "").strip()
-        d = _int(r.get(diff_col, ""))
+        d = diff_fn(r)
         if not name or d is None:
             continue
         buckets[name].append(d)
@@ -201,7 +219,7 @@ def _group_accuracy(
 
 def _atd_group(rows: list[dict], group_key: str, min_n: int = 2) -> list[dict]:
     """ATD-style single-metric breakdown (pct = exact)."""
-    raw = _group_accuracy(rows, group_key, "Diferencia", min_n)
+    raw = _group_accuracy(rows, group_key, _atd_diff, min_n)
     return [
         {"name": r["name"], "n": r["n"], "pct": r["pct_exact"], "mean_diff": r["mean_diff"]}
         for r in raw
@@ -214,32 +232,27 @@ def _atd_group(rows: list[dict], group_key: str, min_n: int = 2) -> list[dict]:
 
 def process(rows: list[dict]) -> dict:
 
-    # --- ATD rows: requiere que ATD Birdie exista (el contenedor ya salió)
-    # Solo ATD Birdie es suficiente para eliminar el falso-0 por fórmula:
-    # el artifact solo ocurre cuando AMBAS fechas están vacías.
+    # --- ATD rows: diff calculado desde fechas fuente (independiente de columna)
     atd_rows = [
         r for r in rows
-        if _int(r.get("Diferencia", "")) is not None
-        and _status(r) in _ALL_STATUSES
+        if _status(r) in _ALL_STATUSES
         and _has_value(r.get("Contenedor", ""))
-        and _has_value(_atd_birdie_val(r))
+        and _atd_diff(r) is not None
     ]
-    atd_diffs = [_int(r["Diferencia"]) for r in atd_rows]
+    atd_diffs = [_atd_diff(r) for r in atd_rows]
 
     atd_exact = sum(1 for d in atd_diffs if d == 0)
     atd_w1    = sum(1 for d in atd_diffs if abs(d) <= 1)
     atd_total = len(atd_diffs)
 
-    # --- ATA rows: SOLO Discharged/Arrived + ambas fechas ATA no vacías
+    # --- ATA rows: diff calculado desde fechas fuente
     ata_rows = [
         r for r in rows
-        if _int(r.get("Diferencia.1", "")) is not None
-        and _status(r) in _ATA_STATUSES
+        if _status(r) in _ATA_STATUSES
         and _has_value(r.get("Contenedor", ""))
-        and _has_value(_ata_birdie_val(r))
-        and _has_value(_ata_coppel_val(r))
+        and _ata_diff(r) is not None
     ]
-    ata_diffs = [_int(r["Diferencia.1"]) for r in ata_rows]
+    ata_diffs = [_ata_diff(r) for r in ata_rows]
 
     ata_exact = sum(1 for d in ata_diffs if d == 0)
     ata_w1 = sum(1 for d in ata_diffs if abs(d) <= 1)
@@ -259,12 +272,8 @@ def process(rows: list[dict]) -> dict:
         for k, v in sorted(atd_dist_counter.items())
     ]
 
-    # --- ATA distribution (exclude ETA-only rows = Sailing) -------------------
-    ata_actual_rows = [
-        r for r in ata_rows
-        if r.get("Status de solicitud", "").strip() in ("Discharged", "Arrived")
-    ]
-    ata_actual_diffs = [_int(r["Diferencia.1"]) for r in ata_actual_rows]
+    # --- ATA distribution (ata_rows already excludes Sailing) -----------------
+    ata_actual_diffs = [_ata_diff(r) for r in ata_rows]
     ata_dist_counter: Counter = Counter(ata_actual_diffs)
     ata_dist = [
         {"diff": k, "count": v}
@@ -272,10 +281,10 @@ def process(rows: list[dict]) -> dict:
     ]
 
     # --- ATA navieras ---------------------------------------------------------
-    ata_navieras = _group_accuracy(ata_rows, "Línea de entrega", "Diferencia.1")
+    ata_navieras = _group_accuracy(ata_rows, "Línea de entrega", _ata_diff)
 
-    # --- ATA PODs — Sheet uses "Puerto arribo" (not "Puerto arribo Birdie") ---
-    ata_pods = _group_accuracy(ata_rows, "Puerto arribo", "Diferencia.1")
+    # --- ATA PODs -------------------------------------------------------------
+    ata_pods = _group_accuracy(ata_rows, "Puerto arribo", _ata_diff)
 
     # --- ATD navieras ---------------------------------------------------------
     navieras = _atd_group(atd_rows, "Línea de entrega", min_n=1)
@@ -284,16 +293,14 @@ def process(rows: list[dict]) -> dict:
     puertos_raw = _atd_group(atd_rows, "Puerto origen", min_n=1)
     puertos = sorted(puertos_raw, key=lambda x: -x["n"])[:12]
 
-    # --- ETA prediction: Discharged con ambas fechas ATA presentes -------------
+    # --- ETA prediction: Discharged con ambas fechas ATA/ETA presentes --------
     discharged = [
         r for r in rows
         if _status(r) == "Discharged"
-        and _int(r.get("Diferencia.1", "")) is not None
         and _has_value(r.get("Contenedor", ""))
-        and _has_value(_ata_birdie_val(r))
-        and _has_value(_ata_coppel_val(r))
+        and _ata_diff(r) is not None
     ]
-    eta_diffs = [_int(r["Diferencia.1"]) for r in discharged]
+    eta_diffs = [_ata_diff(r) for r in discharged]
     eta_n = len(eta_diffs)
     eta_exact = sum(1 for d in eta_diffs if d == 0)
     eta_w1 = sum(1 for d in eta_diffs if abs(d) <= 1)
@@ -322,7 +329,7 @@ def process(rows: list[dict]) -> dict:
     cntr_counts = Counter(r.get("Contenedor", "").strip() for r in real_rows)
     duplicates = sum(1 for v in cntr_counts.values() if v > 1)
 
-    # --- Weekly trend & WoW ---------------------------------------------------
+    # --- Weekly trend & WoW (diffs computed from dates) -----------------------
     weekly_trend, wow = _weekly_trend(real_rows)
 
     # --- Table (all rows, raw) ------------------------------------------------
