@@ -1034,23 +1034,14 @@
   </main>
 </div>
 
-<!-- GOOGLE DRIVE MODAL -->
+<!-- RELOAD MODAL -->
 <div class="modal-overlay" id="gdriveModal">
   <div class="modal">
-    <div class="modal-title">Conectar Google Drive</div>
-    <div class="modal-sub">Carga el archivo de trackings directamente desde Google Sheets o Drive para mantener el dashboard siempre actualizado.</div>
-
-    <div class="modal-field">
-      <label class="modal-label">URL de Google Sheets / Drive</label>
-      <input class="modal-input" type="text" id="gdriveUrl" placeholder="https://docs.google.com/spreadsheets/d/..." />
-    </div>
+    <div class="modal-title">↻ Actualizar datos</div>
+    <div class="modal-sub">Se leerá el Google Sheet configurado y se recalcularán todas las métricas. Se guardará una captura automática del resultado.</div>
 
     <div class="modal-hint">
-      <strong>Cómo configurar:</strong><br>
-      1. Abre el archivo en Google Sheets<br>
-      2. Archivo → Compartir → <code>Cualquier persona con el enlace puede ver</code><br>
-      3. Copia la URL y pégala aquí<br><br>
-      <strong>Formato esperado:</strong> Excel (.xlsx) o Google Sheets con hoja <code>ag-grid</code> y columnas ATD/ATA Birdie y Coppel.
+      El Sheet fuente está configurado en el servidor. No necesitas ingresar ninguna URL.
     </div>
 
     <div class="modal-actions">
@@ -1564,9 +1555,6 @@ function openModal() { document.getElementById('gdriveModal').classList.add('ope
 function closeModal() { document.getElementById('gdriveModal').classList.remove('open'); }
 
 async function loadFromDrive() {
-  const url = document.getElementById('gdriveUrl').value.trim();
-  if(!url) { alert('Por favor ingresa la URL del archivo'); return; }
-
   const dot = document.getElementById('sourceDot');
   const txt = document.getElementById('sourceText');
   dot.className = 'dot loading';
