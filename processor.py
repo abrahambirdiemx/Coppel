@@ -214,15 +214,15 @@ def _atd_group(rows: list[dict], group_key: str, min_n: int = 2) -> list[dict]:
 
 def process(rows: list[dict]) -> dict:
 
-    # --- ATD rows: Diferencia válida + ambas fechas fuente no vacías
-    # (la fórmula devuelve 0 si alguna celda está vacía → falso positivo)
+    # --- ATD rows: requiere que ATD Birdie exista (el contenedor ya salió)
+    # Solo ATD Birdie es suficiente para eliminar el falso-0 por fórmula:
+    # el artifact solo ocurre cuando AMBAS fechas están vacías.
     atd_rows = [
         r for r in rows
         if _int(r.get("Diferencia", "")) is not None
         and _status(r) in _ALL_STATUSES
         and _has_value(r.get("Contenedor", ""))
         and _has_value(_atd_birdie_val(r))
-        and _has_value(_atd_coppel_val(r))
     ]
     atd_diffs = [_int(r["Diferencia"]) for r in atd_rows]
 

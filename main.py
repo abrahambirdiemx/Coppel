@@ -93,15 +93,24 @@ def debug():
     sa_exists = Path(sa_file).exists()
     try:
         rows = get_sheet_rows()
+        # Sample: first row with non-empty Contenedor
+        sample_row = next((r for r in rows if r.get("Contenedor", "").strip()), rows[0] if rows else {})
+        # Show which key date columns are filled in sample
+        date_cols = ["ATD", "ATD Birdie", "ATD Coppel", "NETD Coppel",
+                     "ATA", "ATA Birdie", "ATA/ETA Birdie", "ATA/ETA Coppel",
+                     "ETA", "ETA Birdie", "Diferencia", "Diferencia.1",
+                     "Status de solicitud"]
+        sample_dates = {k: sample_row.get(k, "—") for k in date_cols}
         return {
             "status": "ok",
-            "code_version": "f79a308",
+            "code_version": "8434dec",
             "sheet_id": sheet_id,
             "sheet_name": sheet_name,
             "service_account_file": sa_file,
             "service_account_exists": sa_exists,
             "rows_found": len(rows),
             "first_row_keys": list(rows[0].keys()) if rows else [],
+            "sample_date_cols": sample_dates,
         }
     except Exception as exc:
         return {
