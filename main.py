@@ -93,24 +93,41 @@ def debug():
     sa_exists = Path(sa_file).exists()
     try:
         rows = get_sheet_rows()
-        # Sample: first row with non-empty Contenedor
-        sample_row = next((r for r in rows if r.get("Contenedor", "").strip()), rows[0] if rows else {})
-        # Show which key date columns are filled in sample
-        date_cols = ["ATD", "ATD Birdie", "ATD Coppel", "NETD Coppel",
-                     "ATA", "ATA Birdie", "ATA/ETA Birdie", "ATA/ETA Coppel",
-                     "ETA", "ETA Birdie", "Diferencia", "Diferencia.1",
-                     "Status de solicitud"]
-        sample_dates = {k: sample_row.get(k, "—") for k in date_cols}
+        real = [r for r in rows if r.get("Contenedor","").strip()]
+
+        def filled(rows, col):
+            return sum(1 for r in rows if r.get(col,"").strip())
+
+        # Show first real row
+        sample = next((r for r in real), {})
+
+        # Count how many rows have each key column filled
+        col_fill = {
+            "ATD":            filled(real, "ATD"),
+            "ATD Birdie":     filled(real, "ATD Birdie"),
+            "NETD Coppel":    filled(real, "NETD Coppel"),
+            "ATD Coppel":     filled(real, "ATD Coppel"),
+            "Diferencia":     filled(real, "Diferencia"),
+            "ATA":            filled(real, "ATA"),
+            "ATA Birdie":     filled(real, "ATA Birdie"),
+            "ATA/ETA Coppel": filled(real, "ATA/ETA Coppel"),
+            "Diferencia.1":   filled(real, "Diferencia.1"),
+            "Status de solicitud": filled(real, "Status de solicitud"),
+        }
+        status_dist = {}
+        for r in real:
+            s = r.get("Status de solicitud","").strip()
+            status_dist[s] = status_dist.get(s, 0) + 1
+
         return {
             "status": "ok",
-            "code_version": "8434dec",
-            "sheet_id": sheet_id,
-            "sheet_name": sheet_name,
-            "service_account_file": sa_file,
-            "service_account_exists": sa_exists,
+            "code_version": "2a2925a",
             "rows_found": len(rows),
-            "first_row_keys": list(rows[0].keys()) if rows else [],
-            "sample_date_cols": sample_dates,
+            "real_rows": len(real),
+            "col_filled_count": col_fill,
+            "status_distribution": status_dist,
+            "first_real_row_keys": list(sample.keys()),
+            "first_real_row_sample": {k: sample.get(k,"") for k in list(sample.keys())[:10]},
         }
     except Exception as exc:
         return {
