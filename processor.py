@@ -62,6 +62,31 @@ def _status(r: dict) -> str:
     return r.get("Status de solicitud", "").strip()
 
 
+# ---------------------------------------------------------------------------
+# Column-name-agnostic date accessors
+# (handles both old sheet and new sheet naming conventions)
+# ---------------------------------------------------------------------------
+
+def _atd_birdie_val(r: dict) -> str:
+    """ATD Birdie date — old sheet: 'ATD Birdie', new sheet: 'ATD'."""
+    return r.get("ATD Birdie") or r.get("ATD") or ""
+
+
+def _atd_coppel_val(r: dict) -> str:
+    """ATD Coppel date — old sheet: 'ATD Coppel', alias: 'NETD Coppel'."""
+    return r.get("ATD Coppel") or r.get("NETD Coppel") or ""
+
+
+def _ata_birdie_val(r: dict) -> str:
+    """ATA Birdie date — old: 'ATA/ETA Birdie' or 'ATA Birdie', new: 'ATA'."""
+    return r.get("ATA/ETA Birdie") or r.get("ATA Birdie") or r.get("ATA") or ""
+
+
+def _ata_coppel_val(r: dict) -> str:
+    """ATA/ETA Coppel — consistent across all sheet versions."""
+    return r.get("ATA/ETA Coppel") or ""
+
+
 def _parse_fecha(val) -> date_type | None:
     """Parse Fecha de creación — handles datetime, date, or string."""
     if val is None:
@@ -189,13 +214,15 @@ def _atd_group(rows: list[dict], group_key: str, min_n: int = 2) -> list[dict]:
 
 def process(rows: list[dict]) -> dict:
 
-    # --- ATD rows: Diferencia es entero válido Y el contenedor tiene status real
-    # (excluye filas vacías donde la fórmula devuelve 0 por celdas vacías)
+    # --- ATD rows: Diferencia válida + ambas fechas fuente no vacías
+    # (la fórmula devuelve 0 si alguna celda está vacía → falso positivo)
     atd_rows = [
         r for r in rows
         if _int(r.get("Diferencia", "")) is not None
         and _status(r) in _ALL_STATUSES
         and _has_value(r.get("Contenedor", ""))
+        and _has_value(_atd_birdie_val(r))
+        and _has_value(_atd_coppel_val(r))
     ]
     atd_diffs = [_int(r["Diferencia"]) for r in atd_rows]
 
@@ -203,13 +230,14 @@ def process(rows: list[dict]) -> dict:
     atd_w1    = sum(1 for d in atd_diffs if abs(d) <= 1)
     atd_total = len(atd_diffs)
 
-    # --- ATA rows: SOLO Discharged/Arrived con Diferencia.1 válida
-    # Sailing aún no tiene ATA real → su Diferencia.1 sería 0 falso por fórmula vacía
+    # --- ATA rows: SOLO Discharged/Arrived + ambas fechas ATA no vacías
     ata_rows = [
         r for r in rows
         if _int(r.get("Diferencia.1", "")) is not None
         and _status(r) in _ATA_STATUSES
         and _has_value(r.get("Contenedor", ""))
+        and _has_value(_ata_birdie_val(r))
+        and _has_value(_ata_coppel_val(r))
     ]
     ata_diffs = [_int(r["Diferencia.1"]) for r in ata_rows]
 
@@ -256,12 +284,14 @@ def process(rows: list[dict]) -> dict:
     puertos_raw = _atd_group(atd_rows, "Puerto origen", min_n=1)
     puertos = sorted(puertos_raw, key=lambda x: -x["n"])[:12]
 
-    # --- ETA prediction: Discharged con Diferencia.1 válida y contenedor real --
+    # --- ETA prediction: Discharged con ambas fechas ATA presentes -------------
     discharged = [
         r for r in rows
         if _status(r) == "Discharged"
         and _int(r.get("Diferencia.1", "")) is not None
         and _has_value(r.get("Contenedor", ""))
+        and _has_value(_ata_birdie_val(r))
+        and _has_value(_ata_coppel_val(r))
     ]
     eta_diffs = [_int(r["Diferencia.1"]) for r in discharged]
     eta_n = len(eta_diffs)
