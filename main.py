@@ -121,7 +121,7 @@ def debug():
 
         return {
             "status": "ok",
-            "code_version": "2a2925a",
+            "code_version": "fix-metrics-v1",
             "rows_found": len(rows),
             "real_rows": len(real),
             "col_filled_count": col_fill,
@@ -139,6 +139,40 @@ def debug():
             "service_account_exists": sa_exists,
             "error": str(exc),
         }
+
+
+@app.get("/api/debug/diffs")
+def debug_diffs():
+    """Muestra diffs computados para diagnosticar mapeo de columnas."""
+    from processor import (
+        _atd_diff, _ata_diff, _atd_birdie_val, _atd_coppel_val,
+        _ata_birdie_val, _ata_coppel_val, _status, _has_value,
+    )
+    try:
+        rows = get_sheet_rows()
+        real = [r for r in rows if r.get("Contenedor", "").strip()]
+        atd_valid = sum(1 for r in real if _atd_diff(r) is not None)
+        ata_valid = sum(1 for r in real if _ata_diff(r) is not None)
+        sample = []
+        for r in real[:20]:
+            sample.append({
+                "contenedor": r.get("Contenedor", ""),
+                "status": _status(r),
+                "atd_birdie": _atd_birdie_val(r),
+                "atd_coppel": _atd_coppel_val(r),
+                "atd_diff": _atd_diff(r),
+                "ata_birdie": _ata_birdie_val(r),
+                "ata_coppel": _ata_coppel_val(r),
+                "ata_diff": _ata_diff(r),
+            })
+        return {
+            "atd_valid_rows": atd_valid,
+            "ata_valid_rows": ata_valid,
+            "total_real_rows": len(real),
+            "sample": sample,
+        }
+    except Exception as exc:
+        return {"error": str(exc)}
 
 
 # ---------------------------------------------------------------------------
